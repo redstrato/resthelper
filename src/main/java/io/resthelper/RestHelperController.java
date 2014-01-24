@@ -15,6 +15,10 @@
  */
 package io.resthelper;
 
+import io.resthelper.model.QueryParam;
+import io.resthelper.model.ReqHeader;
+import io.resthelper.model.RestApi;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
@@ -53,7 +57,7 @@ public class RestHelperController {
 	}
 
 	@Autowired
-	private RestHelper apiHelper;
+	private RestHelperService restHelperService;
 
 	@ExceptionHandler(NotAllowIpException.class)
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)
@@ -73,7 +77,7 @@ public class RestHelperController {
 		String requestURI = request.getRequestURI();
 		String contextName = requestURI.substring(0, requestURI.indexOf("/rest-helper"));
 
-		if (!apiHelper.isValidIp(request)) {
+		if (!restHelperService.isValidIp(request)) {
 			throw new NotAllowIpException();
 		}
 
@@ -115,7 +119,7 @@ public class RestHelperController {
 		String requestURI = request.getRequestURI();
 		String contextName = requestURI.substring(0, requestURI.indexOf("/rest-helper"));
 
-		String[] packages = apiHelper.getBasePackages();
+		String[] packages = restHelperService.getBasePackages();
 
 		response.setContentType("text/html; charset=utf-8");
 		response.setCharacterEncoding("utf-8");
@@ -126,7 +130,7 @@ public class RestHelperController {
 			return;
 		}
 
-		if (!apiHelper.isValidIp(request)) {
+		if (!restHelperService.isValidIp(request)) {
 			throw new NotAllowIpException();
 		}
 		
@@ -176,11 +180,11 @@ public class RestHelperController {
 			return;
 		}
 		
-		if (!apiHelper.isValidIp(request)) {
+		if (!restHelperService.isValidIp(request)) {
 			throw new NotAllowIpException();
 		}
 
-		List<RestApi> apiList = apiHelper.getApiList(packageName);
+		List<RestApi> apiList = restHelperService.getApiList(packageName);
 
 		out.println("<!DOCTYPE html>");
 		out.println("<html>");
@@ -225,11 +229,11 @@ public class RestHelperController {
 			out.flush();
 			return;
 		}
-		if (!apiHelper.isValidIp(request)) {
+		if (!restHelperService.isValidIp(request)) {
 			throw new NotAllowIpException();
 		}
 
-		List<RestApi> apiList = apiHelper.getApiList(packageName);
+		List<RestApi> apiList = restHelperService.getApiList(packageName);
 
 		String requestURI = request.getRequestURI();
 		String contextName = requestURI.substring(0, requestURI.indexOf("/rest-helper"));
@@ -467,7 +471,7 @@ public class RestHelperController {
 	
 	@RequestMapping(value = "/rest-helper/restfuljs", method = RequestMethod.GET)
 	public void restfuljs(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		if (!apiHelper.isValidIp(request)) {
+		if (!restHelperService.isValidIp(request)) {
 			throw new NotAllowIpException();
 		}
 		

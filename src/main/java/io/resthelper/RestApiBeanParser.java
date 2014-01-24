@@ -17,6 +17,10 @@ package io.resthelper;
 
 import io.resthelper.annotations.ApiDescription;
 import io.resthelper.annotations.ApiName;
+import io.resthelper.model.CookieVal;
+import io.resthelper.model.QueryParam;
+import io.resthelper.model.ReqHeader;
+import io.resthelper.model.RestApi;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

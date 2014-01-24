@@ -15,6 +15,8 @@
  */
 package io.resthelper;
 
+import io.resthelper.model.RestApi;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,11 +29,14 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -39,13 +44,14 @@ import org.springframework.util.CollectionUtils;
  * 
  * @author redstrato
  */
-public class RestHelperService implements RestHelper {
+@Service
+public class RestHelperService implements InitializingBean, DisposableBean {
 	// slf4j-log4j
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	// <package, apilist>
 	private Map<String, List<RestApi>> apiMap = new HashMap<String, List<RestApi>>();
-	private RestApiBeanParser webApiBeanParser = new RestApiBeanParser();
+	private RestApiBeanParser restApiBeanParser = new RestApiBeanParser();
 
 	@Value("${resthelper.acl.use:true}")
 	private boolean useIpAcl;
@@ -53,15 +59,13 @@ public class RestHelperService implements RestHelper {
 	@Value("${resthelper.acl.ip:127.0.0.1,10,0:0:0:0:0:0:0:1}")
 	private String[] aclIpArray;
 
+	@Value("${resthelper.base.packages}")
 	private String[] basePackages;
 
-	public void setBasePackages(String[] basePackages) {
-		this.basePackages = basePackages;
-	}
-
-	public void init() throws ClassNotFoundException {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 		logger.info("initializing...");
-		// @Controller 만 검색
+		// search @Controller only
 		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
 		scanner.addIncludeFilter(new AnnotationTypeFilter(Controller.class));
 
@@ -73,50 +77,44 @@ public class RestHelperService implements RestHelper {
 		for (String basePackage : basePackages) {
 			logger.debug("scanning package; {}", basePackage);
 			Set<BeanDefinition> beans = scanner.findCandidateComponents(basePackage);
-			Map<String, RestApi> tempApiMap = new HashMap<String, RestApi>();
+			Map<String, RestApi> tempRestApiMap = new HashMap<String, RestApi>();
 
 			for (BeanDefinition bean : beans) {
 				logger.debug("\tparsing bean definition; {}", bean);
-				List<RestApi> webApiList = webApiBeanParser.parseBeanDefinition(bean);
+				List<RestApi> restApiList = restApiBeanParser.parseBeanDefinition(bean);
 
-				for (RestApi webApi : webApiList) {
+				for (RestApi restApi : restApiList) {
 					StringBuilder apiKeyBuilder = new StringBuilder();
-					apiKeyBuilder.append(webApi.getUriPattern() + "-");
-					apiKeyBuilder.append(webApi.getHttpMethod());
+					apiKeyBuilder.append(restApi.getUriPattern() + "-");
+					apiKeyBuilder.append(restApi.getHttpMethod());
 
-					//					String[] matchingParams = webApi.getMatchingParams();
-					//					for (String matchingParam : matchingParams) {
-					//						apiKeyBuilder.append(matchingParam + "&");
-					//					}
-					//					
-					//					String[] matchingHeaders = webApi.getMatchingHeaders();
-					//					for (String matchingHeader : matchingHeaders) {
-					//						apiKeyBuilder.append("::" + matchingHeader);
-					//					}
-					//					
 					String apiKey = apiKeyBuilder.toString();
-					webApi.setApiKey(apiKey);
-					tempApiMap.put(apiKey, webApi);
+					restApi.setApiKey(apiKey);
+					tempRestApiMap.put(apiKey, restApi);
 
 					logger.debug("\t\tadded api; {}", apiKey);
 				}
 			}
 
-			List<String> keyList = new ArrayList<String>(tempApiMap.keySet());
+			List<String> keyList = new ArrayList<String>(tempRestApiMap.keySet());
 			Collections.sort(keyList);
 
 			List<RestApi> apiList = new ArrayList<RestApi>();
 
 			for (String key : keyList) {
-				apiList.add(tempApiMap.get(key));
+				apiList.add(tempRestApiMap.get(key));
 			}
 
-			// 각 package별로 sort된 상태로 list 추가
 			apiMap.put(basePackage, Collections.unmodifiableList(apiList));
 		}
 	}
 
-	@Override
+	/**
+	 * check ip
+	 * 
+	 * @param request
+	 * @return
+	 */
 	public boolean isValidIp(HttpServletRequest request) {
 		if (!useIpAcl) {
 			return true;
@@ -124,7 +122,7 @@ public class RestHelperService implements RestHelper {
 		
 		List<String> aclIpList = Arrays.asList(aclIpArray);
 
-		String remoteAddr = request.getHeader("X-Real-IP");
+		String remoteAddr = request.getHeader("X-Real-IP");	// for nginx proxy
 		remoteAddr = (remoteAddr != null) ? remoteAddr : request.getRemoteAddr();
 
 		logger.debug("acl check : {}", useIpAcl);
@@ -152,15 +150,15 @@ public class RestHelperService implements RestHelper {
 		return false;
 	}
 
+	@Override
 	public void destroy() {
 		logger.info("destroying...");
 	}
 
 	/**
-	 * 전체 api 목록
+	 * whole api list
 	 * 
 	 * @return
-	 * @see io.resthelper.RestHelper#getApiList()
 	 */
 	public List<RestApi> getApiList() {
 		List<RestApi> apiList = new ArrayList<RestApi>();
@@ -169,28 +167,26 @@ public class RestHelperService implements RestHelper {
 			apiList.addAll(apis);
 		}
 
-		// XXX sort 필요한가?
+		// XXX sorting?
 
 		return apiList;
 	}
 
 	/**
-	 * package별 api 목록
+	 * whole api list
 	 * 
-	 * @param packageName
 	 * @return
-	 * @see io.resthelper.RestHelper#getApiList(java.lang.String)
 	 */
-	@Override
 	public List<RestApi> getApiList(String packageName) {
 		return apiMap.get(packageName);
 	}
 
+	
 	/**
+	 * base backages
+	 * 
 	 * @return
-	 * @see io.resthelper.RestHelper#getBasePackages()
 	 */
-	@Override
 	public String[] getBasePackages() {
 		return basePackages;
 	}

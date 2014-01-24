@@ -13,31 +13,39 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.resthelper;
-
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
+package io.resthelper.model;
 
 /**
+ * form parameter. GET의 URI에 추가되 query parameter를 대상으로 함
+ * 
  * @author redstrato
  */
-public interface RestHelper {
-	/**
-	 * @return
-	 */
-	List<RestApi> getApiList();
+public class QueryParam {
+	private String name = "";
+	private boolean required = true;
+	private String devaultValue = "";
 
-	/**
-	 * @param packageName
-	 * @return
-	 */
-	List<RestApi> getApiList(String packageName);
+	public String getName() {
+		return name;
+	}
 
-	/**
-	 * @return
-	 */
-	String[] getBasePackages();
+	public void setName(String name) {
+		this.name = name;
+	}
 
-	boolean isValidIp(HttpServletRequest request);
+	public boolean isRequired() {
+		return required;
+	}
+
+	public void setRequired(boolean required) {
+		this.required = required;
+	}
+
+	public String getDevaultValue() {
+		return devaultValue;
+	}
+
+	public void setDevaultValue(String devaultValue) {
+		this.devaultValue = devaultValue;
+	}
 }

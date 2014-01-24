@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package io.resthelper;
+package io.resthelper.model;
 
 /**
  * uri, method, header, parameter 조합의 하나의 web api
