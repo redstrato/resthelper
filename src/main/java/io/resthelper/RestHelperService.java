@@ -46,7 +46,6 @@ import org.springframework.util.CollectionUtils;
  */
 @Service
 public class RestHelperService implements InitializingBean, DisposableBean {
-	// slf4j-log4j
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	// <package, apilist>
@@ -70,17 +69,17 @@ public class RestHelperService implements InitializingBean, DisposableBean {
 		scanner.addIncludeFilter(new AnnotationTypeFilter(Controller.class));
 
 		if (basePackages == null) {
-			logger.info("basePackages is null. finishing scanning apis");
+			logger.warn("basePackages is null. finishing scanning apis");
 			return;
 		}
 
 		for (String basePackage : basePackages) {
-			logger.debug("scanning package; {}", basePackage);
+			logger.info("scanning package; {}", basePackage);
 			Set<BeanDefinition> beans = scanner.findCandidateComponents(basePackage);
 			Map<String, RestApi> tempRestApiMap = new HashMap<String, RestApi>();
 
 			for (BeanDefinition bean : beans) {
-				logger.debug("\tparsing bean definition; {}", bean);
+				logger.info("\tparsing bean definition; {}", bean);
 				List<RestApi> restApiList = restApiBeanParser.parseBeanDefinition(bean);
 
 				for (RestApi restApi : restApiList) {
@@ -92,7 +91,7 @@ public class RestHelperService implements InitializingBean, DisposableBean {
 					restApi.setApiKey(apiKey);
 					tempRestApiMap.put(apiKey, restApi);
 
-					logger.debug("\t\tadded api; {}", apiKey);
+					logger.info("\t\tadded api; {}", apiKey);
 				}
 			}
 
@@ -160,27 +159,9 @@ public class RestHelperService implements InitializingBean, DisposableBean {
 	 * 
 	 * @return
 	 */
-	public List<RestApi> getApiList() {
-		List<RestApi> apiList = new ArrayList<RestApi>();
-
-		for (List<RestApi> apis : apiMap.values()) {
-			apiList.addAll(apis);
-		}
-
-		// XXX sorting?
-
-		return apiList;
-	}
-
-	/**
-	 * whole api list
-	 * 
-	 * @return
-	 */
 	public List<RestApi> getApiList(String packageName) {
 		return apiMap.get(packageName);
 	}
-
 	
 	/**
 	 * base backages
