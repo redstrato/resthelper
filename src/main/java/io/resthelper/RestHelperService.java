@@ -47,10 +47,10 @@ public class RestHelperService implements RestHelper {
 	private Map<String, List<RestApi>> apiMap = new HashMap<String, List<RestApi>>();
 	private RestApiBeanParser webApiBeanParser = new RestApiBeanParser();
 
-	@Value("${apihelper.acl.use:true}")
-	private boolean isUseAcl;
+	@Value("${resthelper.acl.use:true}")
+	private boolean useIpAcl;
 
-	@Value("${apihelper.acl.ip:127.0.0.1,10,0:0:0:0:0:0:0:1}")
+	@Value("${resthelper.acl.ip:127.0.0.1,10,0:0:0:0:0:0:0:1}")
 	private String[] aclIpArray;
 
 	private String[] basePackages;
@@ -118,7 +118,7 @@ public class RestHelperService implements RestHelper {
 
 	@Override
 	public boolean isValidIp(HttpServletRequest request) {
-		if (!isUseAcl) {
+		if (!useIpAcl) {
 			return true;
 		}
 		
@@ -127,8 +127,8 @@ public class RestHelperService implements RestHelper {
 		String remoteAddr = request.getHeader("X-Real-IP");
 		remoteAddr = (remoteAddr != null) ? remoteAddr : request.getRemoteAddr();
 
-		logger.debug("acl check : {}", isUseAcl);
-		if ((isUseAcl) && !CollectionUtils.isEmpty(aclIpList)) {
+		logger.debug("acl check : {}", useIpAcl);
+		if ((useIpAcl) && !CollectionUtils.isEmpty(aclIpList)) {
 			if (remoteAddr == null || remoteAddr.length() == 0) {
 				return false;
 			}
