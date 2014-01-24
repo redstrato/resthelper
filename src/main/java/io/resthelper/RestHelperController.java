@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 @Controller
 public class RestHelperController {
-	private static final Logger LOG = LoggerFactory.getLogger(RestHelperController.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(RestHelperController.class);
 
 	private static String RESTFUL_JS = null;
 
@@ -52,7 +52,7 @@ public class RestHelperController {
 		try {
 			RESTFUL_JS = IOUtils.toString(RestHelperController.class.getResourceAsStream("/restful.js"), "utf-8");
 		} catch (IOException e) {
-			LOG.error(e.toString(), e);
+			LOGGER.error(e.toString(), e);
 		}
 	}
 
@@ -65,7 +65,7 @@ public class RestHelperController {
 		String remoteAddr = request.getHeader("X-Real-IP");
 		remoteAddr = (remoteAddr != null) ? remoteAddr : request.getRemoteAddr();
 		
-		LOG.warn("Access Deny Ip : {}", remoteAddr);
+		LOGGER.warn("Access Deny Ip : {}", remoteAddr);
 	}
 	
 	@RequestMapping(value = "/rest-helper", method = RequestMethod.GET)
