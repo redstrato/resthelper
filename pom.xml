@@ -179,4 +179,8 @@
 			</plugin>
 		</plugins>
 	</build>
+	<url>https://github.com/redstrato/resthelper</url>
+	<issueManagement>
+		<url>https://github.com/redstrato/resthelper/issues</url>
+	</issueManagement>
 </project>
