@@ -40,7 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 /**
- * API 검색하여 정보와 목록을 관리
+ * Load APIs
  * 
  * @author redstrato
  */

@@ -53,27 +53,21 @@ class RestApiBeanParser {
 	public List<RestApi> parseBeanDefinition(BeanDefinition bean) throws ClassNotFoundException {
 		List<RestApi> webApiList = new ArrayList<RestApi>();
 
-		// FIXME 적용된 annotation을 알기 위해 class load하게 되면 원래 bean class의 로드 타이밍에 맞지
-		// 않을 수 있는데 상관 없을까?
 		Class<?> clazz = Class.forName(bean.getBeanClassName());
 
-		// Controller 애노테이션 적용 여부 확인? 할필요 있나? Controller 아니고 다른 것일 수 있으므로
-		// FIXME Controller 만 검색하도록 filter 넣을 수 있음. 
 		if (clazz.getAnnotation(Controller.class) == null) {
 			return webApiList;
 		}
 
-		// class에 RequestMapping 적용 여부 확인. 
-		// TODO api 설명 애노테이션은 별도로 추가해야 할까?
 		String baseURIPath = null;
 		RequestMapping classRequestMapping = clazz.getAnnotation(RequestMapping.class);
 
 		if (classRequestMapping != null) {
-			// XXX base uri도 하나만 정하는 것으로 하자. (제약사항)
+			// XXX Restriction: only one base uri allowed;
 			String[] classURIPaths = classRequestMapping.value(); // uri path
 			baseURIPath = classURIPaths[0];
 
-			// XXX 아래 세 가지 인자는 주지 않는 것으로 정하자. (제약사항)
+			// XXX Restriction: three fields are not used;
 			RequestMethod[] classMethods = classRequestMapping.method();
 			String[] classHeaders = classRequestMapping.headers();
 			String[] classParams = classRequestMapping.params();
@@ -85,7 +79,7 @@ class RestApiBeanParser {
 			RestApi webApi = new RestApi();
 			RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
 
-			// XXX @ResponseBody 적용되지 않았으면 Pass
+			// XXX @ResponseBody
 			if (method.getAnnotation(ResponseBody.class) == null || requestMapping == null) {
 				continue;
 			}
@@ -97,7 +91,7 @@ class RestApiBeanParser {
 			// uri
 			String[] uriPatterns = requestMapping.value();
 			
-			// FIXME URI 하나만 mandatory로 지정하기? 하나 이상의 URI를 매핑하는 경우 지원 여부?
+			// XXX Restriction: for now only first uri will be used
 			if (uriPatterns != null && uriPatterns.length > 0) {
 				if (baseURIPath != null) {
 					if (uriPatterns[0].startsWith("/")) {
@@ -132,14 +126,13 @@ class RestApiBeanParser {
 			// http method
 			RequestMethod[] requestMethods = requestMapping.method();
 
-			// XXX RequestMethod도 하나만 mandatory로 지정하기.
+			// XXX Restriction: for now only first method will be used
 			if (requestMethods != null && requestMethods.length > 0) {
 				webApi.setHttpMethod(requestMethods[0].toString());
 			} else {
-				// XXX 일단 없으면 GET으로.
+				// XXX default; GET
 				webApi.setHttpMethod(RequestMethod.GET.toString());
 			}
-			
 
 			// matching params
 			String[] matchingParams = requestMapping.params();
@@ -149,7 +142,7 @@ class RestApiBeanParser {
 			String[] matchingHeaders = requestMapping.headers();
 			webApi.setMatchingHeaders(matchingHeaders);
 
-			// parameter별 annotation 확인. PathVariable, RequestParam, CookieValue, RequestHeader, RequestBody
+			// parameter
 			Class<?>[] parameterTypes = method.getParameterTypes();
 			Annotation[][] parameterAnnotations = method.getParameterAnnotations();
 			int parameterLength = parameterTypes.length;
@@ -193,7 +186,6 @@ class RestApiBeanParser {
 						reqHeaders.add(reqHeader);
 					} else if (annotation.annotationType().equals(RequestBody.class)) {
 						// req body
-						// XXX RequestBody는 하나만 있다고 가정
 						requestBodyType = parameterTypes[i];
 					} else if (annotation.annotationType().equals(CookieValue.class)) {
 						// cookie value
@@ -211,8 +203,8 @@ class RestApiBeanParser {
 				}
 			}
 
-			// 주수현
-			// 전체 패키지 명이 다 보여 확인하기 어려워서 수정 (Class 이름만 보이도록)
+			// @wooroo
+			// shorten full class path
 			webApi.setMethodName(getMethodName(method));
 			//webApi.setMethodName(method.toGenericString());
 			webApi.setPathVariableTypes(pathVariableTypes.toArray(new String[pathVariableTypes.size()]));
